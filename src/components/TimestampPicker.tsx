@@ -1,7 +1,9 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { CombinedDateTimeInput } from 'components/CombinedDateTimeInput';
 import { DateTimeInput } from 'components/DateTimeInput';
-import { TFunction } from 'i18next';
 import styles from 'modules/TimestampPicker.module.scss';
-import React, { ChangeEventHandler, FC, useCallback, useMemo } from 'react';
+import { ChangeEventHandler, MouseEventHandler, useCallback, useEffect, useMemo, useState, VFC, VoidFunctionComponent } from 'react';
+import { TFunction } from 'react-i18next';
 import Select from 'react-select';
 import { StylesConfig } from 'react-select/src/styles';
 import { ThemeConfig } from 'react-select/src/theme';
@@ -10,6 +12,7 @@ import { getTimezoneValue } from 'src/util/timezone';
 
 const dateInputId = 'date-input';
 const timeInputId = 'time-input';
+const dateTimeInputId = 'date-time-input';
 const timezoneSelectId = 'timezone-input';
 
 interface TimezoneOptionType {
@@ -65,6 +68,7 @@ const customStyles: StylesConfig<TimezoneOptionType, false> = {
     };
   },
 };
+const splitPrefKey = 'split-input';
 
 interface PropTypes {
   changeTimezone: (tz: null | string) => void;
@@ -72,23 +76,26 @@ interface PropTypes {
   fixedTimestamp: boolean;
   handleDateChange: (value: string | null) => void;
   handleTimeChange: (value: string | null) => void;
+  handleDateTimeChange: (value: string | null) => void;
   t: TFunction;
   timeString: string;
   timezone: string;
   timezoneNames: TimezoneOptionType[];
+  ButtonsComponent: VoidFunctionComponent;
 }
 
-export const TimestampPicker: FC<PropTypes> = ({
+export const TimestampPicker: VFC<PropTypes> = ({
   changeTimezone,
   dateString,
   fixedTimestamp,
   handleDateChange: onDateChange,
   handleTimeChange: onTimeChange,
+  handleDateTimeChange: onDateTimeChange,
   t,
   timeString,
   timezone,
   timezoneNames,
-  children,
+  ButtonsComponent,
 }) => {
   const handleTimezoneChange = useCallback(
     (selected: TimezoneOptionType | null) => {
@@ -97,45 +104,88 @@ export const TimestampPicker: FC<PropTypes> = ({
     [changeTimezone],
   );
 
+  const [combinedInput, setCombinedInput] = useState(false);
+
   const timezoneSelectValue = useMemo(() => getTimezoneValue(timezone), [timezone]);
 
   const handleDateChange: ChangeEventHandler<HTMLInputElement> = useCallback((e) => onDateChange(e.target.value), [onDateChange]);
-
   const handleTimeChange: ChangeEventHandler<HTMLInputElement> = useCallback((e) => onTimeChange(e.target.value), [onTimeChange]);
+  const handleDateTimeChange: ChangeEventHandler<HTMLInputElement> = useCallback(
+    (e) => onDateTimeChange(e.target.value),
+    [onDateTimeChange],
+  );
+  const toggleCombinedInput: MouseEventHandler<HTMLAnchorElement> = useCallback((e) => {
+    e.preventDefault();
+    setCombinedInput((value) => !value);
+  }, []);
+
+  useEffect(() => {
+    const storedPref = localStorage.getItem(splitPrefKey);
+    if (storedPref !== null) {
+      setCombinedInput(storedPref !== 'true');
+      return;
+    }
+
+    // Feature detection for datetime-local input
+    const testInput = document.createElement('input');
+    testInput.setAttribute('type', 'datetime-local');
+    const testValue = '1)';
+    testInput.value = testValue;
+    setCombinedInput(testInput.value !== testValue);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(splitPrefKey, combinedInput ? 'false' : 'true');
+  }, [combinedInput]);
 
   return (
     <div className={styles.datepicker}>
       <Row>
         <Col md>
           <FormGroup>
-            <Label className={styles.formLabel}>{t('common:input.date')}</Label>
+            <Label className={`${styles.formLabel} d-flex justify-content-between`}>
+              {t('common:input.date')}
+              <a href="#" className="text-white text-decoration-none" onClick={toggleCombinedInput}>
+                <FontAwesomeIcon icon={combinedInput ? 'toggle-on' : 'toggle-off'} />
+              </a>
+            </Label>
 
-            <Row>
-              <Col xl={6}>
-                <DateTimeInput
-                  type="date"
-                  value={dateString}
-                  className="mb-2 mb-xl-0"
-                  id={dateInputId}
-                  icon="calendar"
-                  onChange={handleDateChange}
-                  readOnly={fixedTimestamp}
-                />
-              </Col>
-              <Col xl={6}>
-                <DateTimeInput
-                  type="time"
-                  value={timeString}
-                  id={timeInputId}
-                  icon="clock"
-                  onChange={handleTimeChange}
-                  readOnly={fixedTimestamp}
-                />
-              </Col>
-            </Row>
+            {combinedInput ? (
+              <CombinedDateTimeInput
+                value={dateString && timeString ? `${dateString}T${timeString}` : ''}
+                className="mb-2 mb-xl-0"
+                id={dateTimeInputId}
+                onChange={handleDateTimeChange}
+                readOnly={fixedTimestamp}
+              />
+            ) : (
+              <Row>
+                <Col xl={6}>
+                  <DateTimeInput
+                    type="date"
+                    value={dateString}
+                    className="mb-2 mb-xl-0"
+                    id={dateInputId}
+                    icon="calendar"
+                    onChange={handleDateChange}
+                    readOnly={fixedTimestamp}
+                  />
+                </Col>
+                <Col xl={6}>
+                  <DateTimeInput
+                    type="time"
+                    value={timeString}
+                    id={timeInputId}
+                    icon="clock"
+                    onChange={handleTimeChange}
+                    readOnly={fixedTimestamp}
+                  />
+                </Col>
+              </Row>
+            )}
           </FormGroup>
         </Col>
-        <Col md={5}>
+        <Col md={combinedInput ? 5 : 4}>
           <FormGroup>
             <Label className={styles.formLabel} for={timezoneSelectId}>
               {t('common:input.timezone')}
@@ -151,11 +201,13 @@ export const TimestampPicker: FC<PropTypes> = ({
               isClearable
               isDisabled={fixedTimestamp}
             />
-            <div className="d-block d-xl-none mt-2">{children}</div>
+            <div className="d-block d-xl-none mt-2">
+              <ButtonsComponent />
+            </div>
           </FormGroup>
         </Col>
         <Col xs="auto" className="d-none d-xl-flex flex-row align-items-end">
-          {children}
+          <ButtonsComponent />
         </Col>
       </Row>
     </div>

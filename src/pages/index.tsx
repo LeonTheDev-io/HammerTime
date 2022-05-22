@@ -4,18 +4,20 @@ import { CustomIcon } from 'components/CustomIcon';
 import { Layout } from 'components/Layout';
 import { TimestampPicker } from 'components/TimestampPicker';
 import { TimestampsTable } from 'components/TimestampsTable';
+import { TooltipContent } from 'components/TooltipContent';
+import { UsefulLinks } from 'components/UsefulLinks';
 import { parseInt, throttle } from 'lodash';
 import moment, { Moment } from 'moment-timezone';
 import { GetStaticProps } from 'next';
 import { SSRConfig, useTranslation } from 'next-i18next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useCallback, useEffect, useMemo, useState, VFC } from 'react';
-import { Button, FormGroup } from 'reactstrap';
+import React, { useCallback, useEffect, useMemo, useRef, useState, VFC } from 'react';
+import { Button, FormGroup, UncontrolledTooltip } from 'reactstrap';
 import { SITE_TITLE } from 'src/config';
 import { useLocale } from 'src/util/common';
 import { typedServerSideTranslations } from 'src/util/i18n-server';
-import { getSortedNormalizedTimezoneNames, getTimezoneValue, isoDateFormat, isoTimeFormat } from 'src/util/timezone';
+import { getSortedNormalizedTimezoneNames, getTimezoneValue, momentToTimeInputValue } from 'src/util/timezone';
 
 interface IndexPageProps {
   tzNames: string[];
@@ -62,9 +64,28 @@ export const IndexPage: VFC<IndexPageProps> = ({ tzNames }) => {
       }, 200),
     [],
   );
+  const setDateTimeString = useCallback((value: string) => {
+    const [dateStr, timeStr] = value.split(/[T ]/);
+    setTimeString(timeStr);
+    setDateString(dateStr);
+  }, []);
   const handleTimeChange = useCallback((value: null | string) => {
     setTimeString(value || '');
   }, []);
+  const handleDateTimeChange = useMemo(
+    () =>
+      throttle((value: null | string) => {
+        setDateTimeString(value || '');
+      }, 50),
+    [setDateTimeString],
+  );
+  const setTimeNow = useCallback(() => {
+    // Get local time zone
+    const guessed = moment.tz.guess();
+    // Create a timestamp in local timezone and convert it to selected timezone
+    const value = moment.tz(guessed).tz(timezone);
+    setDateTimeString(momentToTimeInputValue(value));
+  }, [setDateTimeString, timezone]);
 
   useEffect(() => {
     let clientMoment: Moment | undefined;
@@ -77,10 +98,10 @@ export const IndexPage: VFC<IndexPageProps> = ({ tzNames }) => {
       }
     }
     if (!clientMoment) clientMoment = moment().seconds(0).milliseconds(0);
-    setTimeString(clientMoment.format(isoTimeFormat));
-    setDateString(clientMoment.format(isoDateFormat));
+    const formatted = momentToTimeInputValue(clientMoment);
+    handleDateTimeChange(formatted);
     handleTimezoneChange(clientTimezone);
-  }, [handleTimezoneChange, initialTimestamp]);
+  }, [handleDateTimeChange, handleTimezoneChange, initialTimestamp]);
 
   useEffect(() => {
     if (!dateString || !timeString) return;
@@ -102,10 +123,54 @@ export const IndexPage: VFC<IndexPageProps> = ({ tzNames }) => {
   }, [locale, t]);
 
   const fixedTimestamp = initialTimestamp !== null;
+  const { lockButtonTooltipText, setTimeButtonTooltipText, leadText } = useMemo(() => {
+    const options = {
+      defaultValue: false,
+      fallbackLng: [],
+    };
+    return {
+      lockButtonTooltipText: t(fixedTimestamp ? 'common:buttons.unlock' : 'common:buttons.lock', options),
+      setTimeButtonTooltipText: t('common:buttons.setCurrentTime', options),
+      leadText: t('common:usefulLinks.lead', options),
+    };
+  }, [fixedTimestamp, t]);
+
+  const ButtonsComponent = useMemo(
+    (): VFC => () => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const setTimeButtonRef = useRef<HTMLButtonElement>(null);
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const lockButtonRef = useRef<HTMLButtonElement>(null);
+
+      return (
+        <FormGroup>
+          <Button size="lg" className="me-2" onClick={setTimeNow} disabled={fixedTimestamp} innerRef={setTimeButtonRef}>
+            <FontAwesomeIcon icon="clock-rotate-left" />
+          </Button>
+          {Boolean(setTimeButtonTooltipText) && (
+            <UncontrolledTooltip target={setTimeButtonRef} fade={false}>
+              {setTimeButtonTooltipText}
+            </UncontrolledTooltip>
+          )}
+          <Link href={fixedTimestamp ? '/' : `/?${TS_QUERY_PARAM}=${timestampInSeconds}`} passHref>
+            <Button tag="a" innerRef={lockButtonRef} size="lg" color={fixedTimestamp ? 'danger' : 'info'}>
+              <FontAwesomeIcon icon={fixedTimestamp ? 'unlock' : 'lock'} />
+            </Button>
+          </Link>
+          {Boolean(lockButtonTooltipText) && (
+            <UncontrolledTooltip target={lockButtonRef} fade={false}>
+              {({ update }) => <TooltipContent update={update}>{lockButtonTooltipText}</TooltipContent>}
+            </UncontrolledTooltip>
+          )}
+        </FormGroup>
+      );
+    },
+    [fixedTimestamp, lockButtonTooltipText, setTimeButtonTooltipText, setTimeNow, timestampInSeconds],
+  );
 
   return (
     <Layout>
-      <AppContainer bg="discord">
+      <AppContainer>
         <h1 className="text-center">
           <CustomIcon src="/logos/app.svg" alt="" />
           <span className="mx-3">{SITE_TITLE}</span>
@@ -119,20 +184,15 @@ export const IndexPage: VFC<IndexPageProps> = ({ tzNames }) => {
           changeTimezone={handleTimezoneChange}
           handleDateChange={handleDateChange}
           handleTimeChange={handleTimeChange}
+          handleDateTimeChange={handleDateTimeChange}
           timezone={timezone}
           timezoneNames={timezoneNames}
           fixedTimestamp={fixedTimestamp}
-        >
-          <FormGroup>
-            <Link href={fixedTimestamp ? '/' : `/?${TS_QUERY_PARAM}=${timestampInSeconds}`} passHref>
-              <Button tag="a" size="lg" color={fixedTimestamp ? 'danger' : 'info'}>
-                <FontAwesomeIcon icon={fixedTimestamp ? 'times-circle' : 'lock'} />
-              </Button>
-            </Link>
-          </FormGroup>
-        </TimestampPicker>
+          ButtonsComponent={ButtonsComponent}
+        />
         <TimestampsTable {...commonProps} timestamp={timestamp} timeInSeconds={timestampInSeconds} />
       </AppContainer>
+      {Boolean(leadText) && <UsefulLinks t={t} leadText={leadText} />}
     </Layout>
   );
 };
