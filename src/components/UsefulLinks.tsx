@@ -4,7 +4,6 @@ import { Trans } from 'next-i18next';
 import Image from 'next/image';
 import React, { memo, ReactChild, VFC } from 'react';
 import { TFunction } from 'react-i18next';
-import { Badge, Col, Row } from 'reactstrap';
 import bot from '../../public/bot.png';
 import server from '../../public/server.png';
 import textColor from '../../public/textcolor.png';
