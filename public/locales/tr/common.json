@@ -26,7 +26,7 @@
       "p": "<1>/timestamp</1> eğik çizgi komutuyla zaman damgaları oluşturun"
     },
     "textColor": {
-      "header": "Rebane'in <1>Renkli</1> Metin Oluşturucusu",
+      "header": "<1>Renkli</1> Metin Oluşturucusu",
       "p": "ANSI renk kodlarını kullanarak renkli Discord mesajları oluşturan basit bir uygulama"
     }
   },

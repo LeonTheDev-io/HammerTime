@@ -17,7 +17,7 @@ interface UsefulLink {
 const UsefulLinksComponent: VFC<{ t: TFunction; leadText: string }> = ({ t, leadText }) => {
   const components: UsefulLink[] = [
     {
-      href: 'https://rebane2001.com/discord-colored-text-generator/',
+      href: 'https://discord-color-text-generator.netlify.app/',
       image: textColor,
       name: (
         <Trans t={t} i18nKey="common:usefulLinks.textColor.header">
