@@ -26,7 +26,7 @@
       "p": "Générez un code d'horodatage avec la commandes Slash <1>/timestamp</1>"
     },
     "textColor": {
-      "header": "Le générateur de texte <1>coloré</1> de Rebane",
+      "header": "Le générateur de texte <1>coloré</1>",
       "p": "Une app simple qui crée des messages Discord colorés grâce aux codes couleur ANSI"
     }
   },

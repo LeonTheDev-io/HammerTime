@@ -26,7 +26,7 @@
       "p": "Jana cap masa dengan perintah tanda miring <1>/timestamp</1>"
     },
     "textColor": {
-      "header": "Penjana Tulisan <1>Berwarna</1> Rebane",
+      "header": "Penjana Tulisan <1>Berwarna</1>",
       "p": "Aplikasi ringkas yang menjana mesej Discord berwarna menggunakan kod warna ANSI"
     }
   },

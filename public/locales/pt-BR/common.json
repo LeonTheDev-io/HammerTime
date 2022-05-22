@@ -26,7 +26,7 @@
       "p": "Gere timestamps com o comando de barra <1>/timestamp</1>"
     },
     "textColor": {
-      "header": "Gerador de Texto <1>Colorido</1> do Rebane",
+      "header": "Gerador de Texto <1>Colorido</1>",
       "p": "Um aplicativo simples que cria mensagens coloridas no Discord usando o código de cores ANSI"
     }
   },

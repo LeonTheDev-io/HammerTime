@@ -26,7 +26,7 @@
       "p": "Generuj znacznik czasu przy użyciu komendy <1>/timestamp</1>"
     },
     "textColor": {
-      "header": "Generator <1>Kolorowego</1> tekstu Rebane'a",
+      "header": "Generator <1>Kolorowego</1> tekstu",
       "p": "Prosta aplikacja do tworzenia kolorowych wiadomości na Discord przy użyciu kodów kolorów ANSI"
     }
   },

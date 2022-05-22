@@ -26,7 +26,7 @@
       "p": "Genereer tijdsaanduidingen met de <1>/timestamp</1> opdracht"
     },
     "textColor": {
-      "header": "Rebane's <1>gekleurde</1> tekst generator",
+      "header": "<1>gekleurde</1> tekst generator",
       "p": "Een eenvoudige app die gekleurde Discord-berichten maakt met ANSI-kleurcodes"
     }
   },

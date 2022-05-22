@@ -26,7 +26,7 @@
       "p": "Generiere Zeitstempel mit dem <1>/timestamp</1> Befehl"
     },
     "textColor": {
-      "header": "Rebane's <1>Farbiger</1> Text Generator",
+      "header": "<1>Farbiger</1> Text Generator",
       "p": "Eine einfache Anwendung, die farbige Discord-Nachrichten mit ANSI-Farbcodes erstellt"
     }
   },
