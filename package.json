@@ -39,7 +39,7 @@
     "react-topbar-progress-indicator": "^4.1.0",
     "reactstrap": "^9.0.2",
     "rimraf": "^3.0.2",
-    "sass": "^1.29.0",
+    "sass": "^1.62.1",
     "urlcat": "^2.0.4"
   },
   "devDependencies": {
